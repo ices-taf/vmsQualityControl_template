@@ -7,7 +7,6 @@ output:
   pdf_document
 ---
 
-<!-- QCTEMPLATE: header -->
 ```{r setup, eval=TRUE, echo=FALSE, cache=FALSE}
 library(knitr)
 
@@ -43,7 +42,6 @@ library(reshape2)
 load("raw/eurPols.Rdata")
 polLand <- fortify(eurPols)
 ```
-<!-- QCTEMPLATE: data -->
 <!------------------------------------------------------------------------------
 Data handling
 ---------------------------------------------------------------------------- -->
@@ -52,20 +50,19 @@ Data handling
 # NOTE:
 #   This chunk of code is replaced when a template is created.
 
-ICES_LE <- read.table('data/ICES_LE.csv', sep = ',', header = TRUE,
+ICES_LE <- read.table('raw/ICES_LE.csv', sep = ',', header = TRUE,
           stringsAsFactors = FALSE, na.strings = 'NULL',
           colClasses = c('character', 'character', 'numeric', 'numeric',
                          'character', 'character', 'character', 'numeric',
                          'character', 'character',
                          'numeric', 'numeric', 'numeric'))
-ICES_VE <- read.table('data/ICES_VE.csv', sep = ',', header = TRUE,
+ICES_VE <- read.table('raw/ICES_VE.csv', sep = ',', header = TRUE,
           stringsAsFactors = FALSE, na.strings = 'NULL',
           colClasses = c('character', 'character', 'numeric', 'numeric',
                          'character', 'character', 'character', 'character',
                          'numeric', 'numeric', 'numeric', 'numeric',
                          'numeric', 'numeric', 'numeric', 'numeric'))
 ```
-<!-- QCTEMPLATE: body -->
 <!------------------------------------------------------------------------------
 Pre-calculations
 ---------------------------------------------------------------------------- -->
