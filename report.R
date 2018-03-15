@@ -6,44 +6,12 @@
 # install vmstools from github
 #devtools::install_github("nielshintzen/vmstools/vmstools")
 
-# This script creates an Rmd file for a specific country
+# packages
+library(icesTAF)
+library(rmarkdown)
 
-# utility function
-makeQCRmd <- function(qc) {
-  # make title
-  qc$yaml[grep("title:", qc$yaml)] <-
-    paste0("title: \"ICES VMS datacall quality check report\"")
-
-  # fill in file names
-  qc$data <-
-    sprintf(
-      paste("<!------------------------------------------------------------------------------",
-            "Data handling",
-            "---------------------------------------------------------------------------- -->",
-            "```{r data}",
-            "#Read in latest submission -->",
-            "ICES_LE <- read.table('%s', sep = ',', header = TRUE,",
-            "          stringsAsFactors = FALSE, na.strings = 'NULL',",
-            "          colClasses = c('character', 'character', 'numeric', 'numeric'," ,
-            "                         'character', 'character', 'character', 'numeric',",
-            "                         'character', 'character',",
-            "                         'numeric', 'numeric', 'numeric'))",
-            "ICES_VE <- read.table('%s', sep = ',', header = TRUE,",
-            "          stringsAsFactors = FALSE, na.strings = 'NULL',",
-            "          colClasses = c('character', 'character', 'numeric', 'numeric',",
-            "                         'character', 'character', 'character', 'character',",
-            "                         'numeric', 'numeric', 'numeric', 'numeric',",
-            "                         'numeric', 'numeric', 'numeric', 'numeric'))",
-            "```",
-            "", sep = "\n"),
-     paste0("raw/ICES_LE.csv"),
-     paste0("raw/ICES_VE.csv"))
-
-  unlist(qc)
-}
-
-
-# main script -----------------
+# source utility functions
+source("utils.R")
 
 # read and parse template file
 qc <- readLines("report.Rmd")
@@ -58,9 +26,6 @@ qc <- list(yaml = qc[1:(loc1-1)],
 # create report directory
 mkdir("report")
 
-msg("Running QC report \n")
-t0 <- proc.time()
-
 # setup file name
 fname <- paste0("report_QC", format(Sys.time(), "_%Y-%m-%d_%b-%Y"),".Rmd")
 
@@ -68,6 +33,6 @@ fname <- paste0("report_QC", format(Sys.time(), "_%Y-%m-%d_%b-%Y"),".Rmd")
 cat(makeQCRmd(qc), sep = "\n", file = fname)
 
 # run template
-rmarkdown::render(fname, out_dir = "report")
+render(fname, output_dir = "report")
 
-msg("ellapsed:", (proc.time() - t0)[2])
+# done!
