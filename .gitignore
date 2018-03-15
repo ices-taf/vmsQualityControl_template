@@ -35,5 +35,5 @@ vignettes/*.pdf
 *.Rproj
 
 # taf stuff
-/data/
+/raw/
 /report/
