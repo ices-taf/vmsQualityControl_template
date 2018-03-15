@@ -9,10 +9,10 @@
 # This script creates an Rmd file for a specific country
 
 # utility function
-makeQCRmd <- function(country, qc) {
+makeQCRmd <- function(qc) {
   # make title
   qc$yaml[grep("title:", qc$yaml)] <-
-    paste0("title: \"ICES VMS datacall quality check report for ", country, "\"")
+    paste0("title: \"ICES VMS datacall quality check report\"")
 
   # fill in file names
   qc$data <-
@@ -36,8 +36,8 @@ makeQCRmd <- function(country, qc) {
             "                         'numeric', 'numeric', 'numeric', 'numeric'))",
             "```",
             "", sep = "\n"),
-     paste0("data/ICES_LE_", country, ".csv"),
-     paste0("data/ICES_VE_", country, ".csv"))
+     paste0("raw/ICES_LE.csv"),
+     paste0("raw/ICES_VE.csv"))
 
   unlist(qc)
 }
@@ -58,25 +58,16 @@ qc <- list(yaml = qc[1:(loc1-1)],
 # create report directory
 mkdir("report")
 
-country <- "GBR"
-
-msg("Running QC for ... ", country, "\n")
+msg("Running QC report \n")
 t0 <- proc.time()
 
 # setup file name
-fname <- paste0("report_QC_", country, format(Sys.time(), "_%Y-%m-%d_%b-%Y"),".Rmd")
+fname <- paste0("report_QC", format(Sys.time(), "_%Y-%m-%d_%b-%Y"),".Rmd")
 
 # fillin and write template
-cat(makeQCRmd(country, qc), sep = "\n", file = fname)
+cat(makeQCRmd(qc), sep = "\n", file = fname)
 
 # run template
 rmarkdown::render(fname, out_dir = "report")
-
-# clean up
-file.copy(fname, file.path("QC/reports", fname), overwrite = TRUE)
-repname <- gsub(".Rmd", ".pdf", fname)
-file.copy(repname, file.path("QC/reports", repname), overwrite = TRUE)
-unlink(fname); unlink(repname); unlink(gsub(".pdf", ".tex", repname))
-unlink(gsub(".Rmd", "_files", fname), recursive = TRUE)
 
 msg("ellapsed:", (proc.time() - t0)[2])
