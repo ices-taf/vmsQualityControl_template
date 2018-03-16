@@ -14,6 +14,11 @@ library(rmarkdown)
 mkdir("report")
 
 # run template
-render("report.Rmd", output_dir = "report")
+render("report.Rmd")
+
+# clean up
+cp(report.pdf, "report", move = TRUE)
+unlink("report.tex")
+unlink("report_files", recursive = TRUE)
 
 # done!

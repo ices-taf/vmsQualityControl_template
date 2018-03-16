@@ -4,7 +4,8 @@ date: "`r format(Sys.time(), '%d %B, %Y')`"
 header-includes:
   - \usepackage{comment}
 output: 
-  pdf_document
+  pdf_document:
+    keep_tex: true
 ---
 
 ```{r setup, eval=TRUE, echo=FALSE, cache=FALSE}
