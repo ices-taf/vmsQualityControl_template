@@ -50,15 +50,30 @@ Data handling
 ICES_LE <- read.table('raw/ICES_LE.csv', sep = ',', header = TRUE,
           stringsAsFactors = FALSE, na.strings = 'NULL',
           colClasses = c('character', 'character', 'numeric', 'numeric',
-                         'character', 'character', 'character', 'numeric',
+                         'character', 'character', 'character', 
                          'character', 'character',
-                         'numeric', 'numeric', 'numeric'))
+                         'numeric', 'numeric', 'numeric', 'numeric'))
+# rename
+names(ICES_LE) <- c("recordtype", "country", "year", "month", 
+   "ICES_rectangle", "gear_code", "LE_MET_level6", "vessel_length_category",
+   "vms_enabled", "fishing_days", "kw_fishing_days",
+   "totweight", "totvalue")
+
 ICES_VE <- read.table('raw/ICES_VE.csv', sep = ',', header = TRUE,
           stringsAsFactors = FALSE, na.strings = 'NULL',
           colClasses = c('character', 'character', 'numeric', 'numeric',
                          'character', 'character', 'character', 'character',
                          'numeric', 'numeric', 'numeric', 'numeric',
-                         'numeric', 'numeric', 'numeric', 'numeric'))
+                         'numeric', 'numeric', 'numeric'))
+# rename 
+names(ICES_VE) <- c("recordtype", "country", "year", "month", 
+  "c_square", "vessel_length_category", "gear_code", "LE_MET_level6", 
+  "fishing_hours", "kw_fishinghours", "totweight", "totvalue", 
+  "avg_fishing_speed", "avg_oal", "avg_kw")
+
+# not sure if we need these
+ICES_VE$ICES_avg_fishing_speed <- NA
+ICES_VE$avg_gearWidth <- NA                      
 ```
 <!------------------------------------------------------------------------------
 Pre-calculations
