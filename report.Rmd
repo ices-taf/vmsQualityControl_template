@@ -1,11 +1,17 @@
 ---
-title: "ICES VMS datacall quality check report"
+title: "ICES VMS datacall quality check report for `params$country`"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 header-includes:
   - \usepackage{comment}
   - \usepackage{booktabs}
   - \usepackage{longtable}
 output: pdf_document
+params:
+    LE_filename: "data/LE.csv"
+    VE_filename: "data/VE.csv"
+    country: "test"
+    eurPols: "begin/initial/eurPols.Rdata"
+    utilities: "utilities.R"
 ---
 
 <!-- QCTEMPLATE: header -->
@@ -43,32 +49,27 @@ library(reshape2)
 ```
 
 ```{r load-data}
-load("POLYGONS/eurPols.Rdata")
+load(params$eurPols)
 polLand <- fortify(eurPols)
 ```
-<!-- QCTEMPLATE: data -->
 <!------------------------------------------------------------------------------
 Data handling
 ---------------------------------------------------------------------------- -->
-```{r, echo=FALSE, results='asis'}
-#Read in latest submission -->
-# NOTE:
-#   This chunk of code is replaced when a template is created.
-
-ICES_LE <- read.table('data/QC_2018/ICES_LE_NLD.csv', sep = ',', header = TRUE,
+```{r data}
+#Read in latest submission -->",
+ICES_LE <- read.table(params$LE_filename, sep = ',', header = TRUE,
           stringsAsFactors = FALSE, na.strings = 'NULL',
           colClasses = c('character', 'character', 'numeric', 'numeric',
                          'character', 'character', 'character', 'numeric',
                          'character', 'character',
                          'numeric', 'numeric', 'numeric'))
-ICES_VE <- read.table('data/QC_2018/ICES_VE_NLD.csv', sep = ',', header = TRUE,
+ICES_VE <- read.table(params$VE_filename, sep = ',', header = TRUE,
           stringsAsFactors = FALSE, na.strings = 'NULL',
           colClasses = c('character', 'character', 'numeric', 'numeric',
                          'character', 'character', 'character', 'character',
                          'numeric', 'numeric', 'numeric', 'numeric',
                          'numeric', 'numeric', 'numeric', 'numeric'))
 ```
-<!-- QCTEMPLATE: body -->
 <!------------------------------------------------------------------------------
 Pre-calculations
 ---------------------------------------------------------------------------- -->
@@ -103,7 +104,7 @@ tempBoundLog <- range(ICES_LE$year, na.rm=TRUE)
 Utility stuff
 ------------------------ -->
 ```{r utilities}
-source("QC/utilities-report.R")
+source(params$utilities)
 ```
 
 

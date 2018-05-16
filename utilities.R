@@ -1,67 +1,99 @@
 
-# utility function
-makeQCRmd <- function(country, data_dir, template = "QC/report-QC-template.Rmd") {
-  
-  # read and parse template file
-  qc <- readLines(template)
-  loc1 <- grep("<!-- QCTEMPLATE: header -->", qc)
-  loc2 <- grep("<!-- QCTEMPLATE: data -->", qc)
-  loc3 <- grep("<!-- QCTEMPLATE: body -->", qc)
-  qc <- list(yaml = qc[1:(loc1-1)], 
-         header = qc[loc1:(loc2-1)], 
-         data = qc[loc2:(loc3-1)], 
-         body = qc[loc3:length(qc)])
-  
-  # make title
-  qc$yaml[grep("title:", qc$yaml)] <- 
-    paste0("title: \"ICES VMS datacall quality check report for ", country, "\"")
-     
-  # fill in file names
-  qc$data <- 
-    sprintf(   
-      paste("<!------------------------------------------------------------------------------",
-            "Data handling",
-            "---------------------------------------------------------------------------- -->",
-            "```{r data}",
-            "#Read in latest submission -->",
-            "ICES_LE <- read.table('%s', sep = ',', header = TRUE,",
-            "          stringsAsFactors = FALSE, na.strings = 'NULL',",
-            "          colClasses = c('character', 'character', 'numeric', 'numeric'," ,
-            "                         'character', 'character', 'character', 'numeric',",
-            "                         'character', 'character',",
-            "                         'numeric', 'numeric', 'numeric'))",
-            "ICES_VE <- read.table('%s', sep = ',', header = TRUE,",
-            "          stringsAsFactors = FALSE, na.strings = 'NULL',",
-            "          colClasses = c('character', 'character', 'numeric', 'numeric',",
-            "                         'character', 'character', 'character', 'character',",
-            "                         'numeric', 'numeric', 'numeric', 'numeric',", 
-            "                         'numeric', 'numeric', 'numeric', 'numeric'))",
-            "```",
-            "", sep = "\n"),
-     paste0(data_dir, "/ICES_LE_", country, ".csv"), 
-     paste0(data_dir, "/ICES_VE_", country, ".csv"))
+# ggplot settings
+theme_icesqc <- function(legend.position = "none")
+  theme(axis.text.y   = element_text(colour="black"),
+        axis.text.x   = element_text(colour="black"),
+        axis.title.y  = element_text(size=14,face="bold"),
+        axis.title.x  = element_text(size=14,face="bold"),
+        legend.position = legend.position,
+        panel.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.line = element_line(colour = "black"),
+        panel.border = element_rect(colour = "black", fill=NA))
 
-  # setup file name
-  fname <- paste0("QC_", country, format(Sys.time(), "_%Y-%m-%d_%b-%Y"),".Rmd")
+
+# utility functions
+make_polVMS <- function(coordGrd, resolution = 0.05) {
+  polVMS <- data.frame(long = rep(c(-1, -1, 1,  1, -1), nrow(coordGrd)) * resolution/2,
+                       lat  = rep(c(-1,  1, 1, -1, -1), nrow(coordGrd)) * resolution/2) 
+  polVMS$long <- polVMS$long + rep(coordGrd$SI_LONG, each = 5)
+  polVMS$lat <- polVMS$lat + rep(coordGrd$SI_LATI, each = 5)
+  polVMS$order <- rep(1:5, nrow(coordGrd))
+  polVMS$hole <- FALSE
+  polVMS$piece <- 1
+  polVMS$id <- rep(1:nrow(coordGrd), each = 5)
+  polVMS$group <- paste0(polVMS$id, ".", polVMS$piece)
   
-  # write Rmd
-  cat(unlist(qc), sep = "\n", file = fname)
-  
-  fname
+  polVMS
 }
 
 
+# default-spatial-ggplot
+spatialplot <- function(data, xyrange = spatCore) {
+  ggplot(polLand, aes(long, lat)) +
+    geom_polygon(aes(group=group), fill = "light grey") +
+    coord_fixed(ratio = vmstools::lonLatRatio(min(xyrange$xrange), min(xyrange$yrange)),
+                xlim = xyrange$xrange, 
+                ylim = xyrange$yrange) +
+    labs(x = "Longitude", y = "Latitude") +
+    geom_polygon(data = data, 
+                 aes(long, lat, group = group, fill = cols)) +
+    geom_polygon(data = polLand, 
+                 aes(long, lat, group = group), 
+                 colour = "black", size = 0.25, fill = "transparent")
+}
 
-copyReport <- function(fname, report_dir, keeps = c("Rmd", "pdf", "tex")) {
-  # copy report and Rmd file
-  fname <- tools::file_path_sans_ext(fname)
-  for (ext in keeps) {
-    cp(paste0(fname, ".", ext), report_dir, move = TRUE)
-  }  
+# area submitted plot
+data_coverage <- function(coordGrd, spatBound, res) {
+
+  # create a fortied polygon of csquares
+  polVMS <- make_polVMS(coordGrd, resolution = res)
+  polVMS$year <- rep(coordGrd$year, each = 5)
+  polVMS$cols <- "red"
   
-  # clean up
-  Sys.sleep(1)
-  unlink(dir(pattern = fname), recursive = TRUE)
+  spatialplot(polVMS, spatBound) +
+    facet_wrap(~ year, ncol = 2) +
+    theme_icesqc()
+}
+
+
+gear_splits <- function(response, data = ICES_VE, ylab_text, func = sum, year_groups = 1, gear_groups = 1) {
+  dat2tab <- 
+    with(data, 
+         tapply(response, list(gear_code = gear_code, year = year), func, na.rm = TRUE))
+
+  # split by year?
+  out <- ""
+  if (year_groups == 1) {
+    out <- c(out, kable(dat2tab, booktabs = TRUE))
+  } else {
+    grp <- cut(as.numeric(colnames(dat2tab)), year_groups)
+    for (igrp in levels(grp)) {
+      out <- c(out, kable(dat2tab[, grp == igrp], booktabs = TRUE), "/n")
+    }    
+  }
+
+  dat2plot <- as.data.frame.table(dat2tab, responseName = "response")
+  dat2plot <- dat2plot[complete.cases(dat2plot),]
+  max <- tapply(dat2plot$response, dat2plot$gear_code, max, na.rm = TRUE)
+  if (gear_groups == 1 || length(unique(max)) == 1) {
+    grp <- rep(1, length(max))
+  } else {
+    max[!is.finite(max)] <- min(max, na.rm = TRUE)
+    grp <- as.numeric(cut(sqrt(max), gear_groups))    
+  }
+
+  p <- 
+    lapply(sort(unique(grp), decreasing = TRUE), function(i) {
+      dat <- dat2plot[dat2plot$gear_code %in% names(max)[grp == i],]
+
+      ggplot(dat, aes(x = year, y = response)) +
+      geom_line(aes(group = gear_code, colour = gear_code), lwd=1.5) +
+      xlab("Year") + ylab(ylab_text) +
+      theme_icesqc(legend.position = "right")
+    })
   
-  invisible(TRUE)
+  list(table = structure(paste(out, collapse = "\n"), format = "latex", class = "knitr_kable"), 
+       plots = p)
 }
