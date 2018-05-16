@@ -13,7 +13,7 @@ source("report.R")
 From CRAN
 * rmarkdown
 * icesTAF
-* plyr)
+* plyr
 * ggplot2
 * vmstools
 * RColorBrewer
@@ -23,4 +23,4 @@ From CRAN
 * kableExtra
 
 from GitHub
-(nielshintzen/vmstools/vmstools)[https://github.com/nielshintzen/vmstools]
+* [nielshintzen/vmstools/vmstools](https://github.com/nielshintzen/vmstools)
