@@ -1,23 +1,38 @@
-
-
-# install vmstools from github
-#devtools::install_github("nielshintzen/vmstools/vmstools")
-
 # libraries
 library(rmarkdown)
 library(icesTAF)
-
+library(jsonlite)
 
 # create report directory
 mkdir("report")
 
-# set up params
-report_params <- list(LE_filename = "data/LE.csv",
-               VE_filename = "data/VE.csv",
-               country = "test")
+# utiities
+source("utilities_qc.R")
 
-# run report
-render("report.Rmd", params = report_params)
+# settings
+config <- read_json(taf.data.path("config.json"), simplifyVector = TRUE)
 
-# copy to report folder
-cp("report.pdf", paste0("report/QC_", report_params$country, format(Sys.time(), "_%Y-%m-%d_%b-%Y"),".pdf"), move = TRUE)
+msg("Running QC for ... ", config$country)
+
+# fillin and write template
+makeQCRmd(config$country, taf.data.path("vms-data"), template = "report_QC_template.Rmd")
+
+# render Rmd
+ret <- try(render("report.Rmd", clean = FALSE, output_format = latex_document()))
+if (inherits(ret, "try-error")) {
+  msg("FAILED - ", country)
+}
+
+# compile pdf
+x <- shell(paste("pdflatex -halt-on-error", ret))
+
+if (x == 0) {
+  # copy report file
+  cp("report.pdf", "report", move = TRUE)
+}
+
+# copy Rmd file
+cp("report.Rmd", "report", move = TRUE)
+
+# copy disclaimer into report folder
+# cp("bootstrap/data/Disclaimer.txt", "report")

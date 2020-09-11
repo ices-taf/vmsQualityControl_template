@@ -37,3 +37,8 @@ vignettes/*.pdf
 # taf stuff
 /raw/
 /report/
+/bootstrap/data/
+/bootstrap/software/
+/bootstrap/library/
+
+/report_files/
