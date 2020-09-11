@@ -34,9 +34,10 @@ my_png <- function(file, width, height) {
       res = 800, units = "in", pointsize = 20)
 }
 
+library(icesTAF)
 library(plyr)
 library(ggplot2)
-library(vmstools)
+taf.library(vmstools)
 library(RColorBrewer)
 library(doBy)
 library(reshape2)
