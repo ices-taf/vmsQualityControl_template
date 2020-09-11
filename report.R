@@ -18,18 +18,9 @@ msg("Running QC for ... ", config$country)
 makeQCRmd(config$country, taf.data.path("vms-data"), template = "report_QC_template.Rmd")
 
 # render Rmd
-ret <- try(render("report.Rmd", clean = FALSE, output_format = latex_document()))
-if (inherits(ret, "try-error")) {
-  msg("FAILED - ", country)
-}
+ret <- try(render("report.Rmd", clean = FALSE, output_format = pdf_document()))
 
-# compile pdf
-x <- shell(paste("pdflatex -halt-on-error", ret))
-
-if (x == 0) {
-  # copy report file
-  cp("report.pdf", "report", move = TRUE)
-}
+try(cp("report.pdf", "report", move = TRUE))
 
 # copy Rmd file
 cp("report.Rmd", "report", move = TRUE)
