@@ -18,7 +18,7 @@ msg("Running QC for ... ", config$country)
 makeQCRmd(config$country, taf.data.path("vms-data"), template = "report_QC_template.Rmd")
 
 # render Rmd
-ret <- try(render("report.Rmd", clean = FALSE, output_format = pdf_document()))
+ret <- try(render("report.Rmd", clean = FALSE))
 
 try(cp("report.pdf", "report", move = TRUE))
 

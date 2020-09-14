@@ -5,7 +5,7 @@ header-includes:
   - \usepackage{comment}
   - \usepackage{booktabs}
   - \usepackage{longtable}
-output: pdf_document
+output: html_document
 ---
 
 <!-- QCTEMPLATE: header -->
