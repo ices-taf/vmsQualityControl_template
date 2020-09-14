@@ -2,6 +2,7 @@
 library(rmarkdown)
 library(icesTAF)
 library(jsonlite)
+library(tinytex)
 
 # create report directory
 mkdir("report")
@@ -18,7 +19,9 @@ msg("Running QC for ... ", config$country)
 makeQCRmd(config$country, taf.data.path("vms-data"), template = "report_QC_template.Rmd")
 
 # render Rmd
-ret <- try(render("report.Rmd", clean = FALSE))
+ret <- try(render("report.Rmd", clean = FALSE, output_format = latex_document()))
+
+tinytex::pdflatex(ret)
 
 try(cp("report.pdf", "report", move = TRUE))
 
