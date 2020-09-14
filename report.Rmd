@@ -11,6 +11,7 @@ output:
 
 ```{r setup, eval=TRUE, echo=FALSE, cache=FALSE}
 library(knitr)
+library(htmlTable)
 
 opts_chunk$set(comment   = NA,
                warning   = FALSE,

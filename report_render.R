@@ -1,8 +1,6 @@
 # libraries
 library(rmarkdown)
 library(icesTAF)
-library(jsonlite)
-library(tinytex)
 
 # create report directory
 mkdir("report")

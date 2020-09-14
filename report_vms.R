@@ -1,14 +1,14 @@
 
 library(icesTAF)
 taf.library(vmstools)
-library(htmlTable)
+library(ggplot2)
 
 source("utilities_report.R")
 
 mkdir("report")
 
-load("bootstrap/data/eurPols.Rdata")
-polLand <- fortify(eurPols)
+#load("bootstrap/data/eurPols.Rdata")
+#polLand <- fortify(eurPols)
 
 ICES_VE <-
   read.table(
