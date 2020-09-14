@@ -7,8 +7,8 @@ source("utilities_report.R")
 
 mkdir("report")
 
-#load("bootstrap/data/eurPols.Rdata")
-#polLand <- fortify(eurPols)
+load("bootstrap/data/eurPols.Rdata")
+polLand <- fortify(eurPols)
 
 ICES_VE <-
   read.table(
@@ -63,115 +63,151 @@ ggplot(records_per_year) +
 ggsave("records_per_year.png", path = "report")
 
 
-## Records assigned to invalid Statistical Rectangles
-if (any(is.na(ICES_VE$SI_LONG))) {
+## Distribution of records by month:
+records_per_month <-
+  data.frame(
+    table(Month = ICES_VE$month, Year = ICES_VE$year)
+  )
+write.taf(records_per_month, dir = "report")
+
+ggplot(records_per_month) +
+  geom_bar(
+    aes(x = Year, y = Freq, fill = factor(Month)),
+    stat = "identity",
+    colour = "white"
+  ) +
+  xlab("Years") + ylab("Count") +
+  scale_fill_grey(guide = guide_legend(title = "Month")) +
+  theme_icesqc()
+ggsave("records_per_month.png", path = "report")
 
 
-  table(`ICES Rectangle` = ICES_VE$ICES_rectangle[is.na(ICES_VE$SI_LONG)],
-              Year = ICES_VE$year[is.na(ICES_VE$SI_LONG)])
-} else {
-  x <- "There were no invalid Statistical Rectangles reported"
-  attr(x, "format") <- "markdown"
-  attr(x, "class") <- "knit_asis"
-  x
-}
+## Spatial extent of data submitted by year:
+coordGrd <- unique(ICES_VE[, c("SI_LONG", "SI_LATI", "year")])
+
+spatial_extent_by_year <-
+  cbind(
+    as.matrix(
+      aggregate(
+        coordGrd$SI_LONG,
+        by = list(coordGrd$year),
+        FUN = range
+      )
+    ),
+    as.matrix(
+      aggregate(
+        coordGrd$SI_LATI,
+        by = list(coordGrd$year),
+        FUN = range
+      )[, -1]
+    )
+  )
+colnames(spatial_extent_by_year) <- c("Year", "min lon", "max lon", "min lat", "max lat")
+write.taf(spatial_extent_by_year, dir = "report")
+
+## Area for which data has been submitted:
+data_coverage(coordGrd, spatBound, res = 0.5)
+ggsave("spatial_extent_by_year_full.png", path = "report")
+
+data_coverage(coordGrd, spatCore, res = 0.05)
+ggsave("spatial_extent_by_year_core.png", path = "report")
+
+
 
 
 if (FALSE) {
+  ## Distribution of number of unique vessels per c-square:
 
-## Distribution of records by month:
-kable(table(ICES_VE$month, ICES_VE$year), booktabs = TRUE)
-
-qplot(factor(year),data=ICES_VE, geom="bar",fill=factor(month)) +
-  xlab("Years") + ylab ("Count") + scale_fill_grey(guide=guide_legend(title="Month")) +
-  theme_icesqc()
-
-## Spatial extent of data submitted by year:
-dat2tab <- as.matrix(aggregate(ICES_VE$SI_LONG,by=list(ICES_VE$year),FUN=range))
-dat2tab <- cbind(dat2tab,as.matrix(aggregate(ICES_VE$SI_LATI,by=list(ICES_VE$year),FUN=range)[,-1]))
-colnames(dat2tab) <- c("Year", "min lon", "max lon", "min lat", "max lat")
-kable(dat2tab, booktabs = TRUE)
-
-## Area for which data has been submitted:
-coordGrd <- unique(ICES_VE[, c("SI_LONG", "SI_LATI", "year")])
-data_coverage(coordGrd, spatBound, res = 0.5)
-
-data_coverage(coordGrd, spatCore, res = 0.05)
-
-## Distribution of number of unique vessels per c-square:
-
-try(
-  barplot(
-    prop.table(
-      table(
-        factor(ICES_VE$UniqueVessels)
-      )
-    ),
-    main = "unnagregated",
-    ylab = "Proportion of c-squares with given number of unique vessels",
-    xlab = "number of unique vessels"
-  )
-)
-
-tmp <- ICES_VE %>%
-  dplyr::group_by(year, c_square) %>%
-  dplyr::summarise(
-    new_count =
-      ifelse(
-        any(UniqueVessels > 2),
-        3,
-        length(unique(unlist(strsplit(AnonVessels, ";"))))
-      )
-  ) %>%
-  dplyr::mutate(
-    new_count = ifelse(new_count >= 3, "3+", paste(new_count))
+  try(
+    barplot(
+      prop.table(
+        table(
+          factor(ICES_VE$UniqueVessels)
+        )
+      ),
+      main = "unnagregated",
+      ylab = "Proportion of c-squares with given number of unique vessels",
+      xlab = "number of unique vessels"
+    )
   )
 
-try(
-  barplot(
-    prop.table(
-      table(factor(tmp$new_count))
-    ),
-    main = "aggregated to year level",
-    ylab = "Proportion of c-squares with given number of unique vessels",
-    xlab = "number of unique vessels"
-  )
-)
+  tmp <- ICES_VE %>%
+    dplyr::group_by(year, c_square) %>%
+    dplyr::summarise(
+      new_count =
+        ifelse(
+          any(UniqueVessels > 2),
+          3,
+          length(unique(unlist(strsplit(AnonVessels, ";"))))
+        )
+    ) %>%
+    dplyr::mutate(
+      new_count = ifelse(new_count >= 3, "3+", paste(new_count))
+    )
 
-tmp <- ICES_VE %>%
-  dplyr::group_by(c_square) %>%
-  dplyr::summarise(
-    new_count =
-      ifelse(
-        any(UniqueVessels > 2),
-        3,
-        length(unique(unlist(strsplit(AnonVessels, ";"))))
-      )
-  ) %>%
-  dplyr::mutate(
-    new_count = ifelse(new_count >= 3, "3+", paste(new_count))
+  try(
+    barplot(
+      prop.table(
+        table(factor(tmp$new_count))
+      ),
+      main = "aggregated to year level",
+      ylab = "Proportion of c-squares with given number of unique vessels",
+      xlab = "number of unique vessels"
+    )
   )
 
-try(
-  barplot(
-    prop.table(
-      table(factor(tmp$new_count))
-    ),
-    main = "fully aggregated",
-    ylab = "Proportion of c-squares with given number of unique vessels",
-    xlab = "number of unique vessels"
+  tmp <- ICES_VE %>%
+    dplyr::group_by(c_square) %>%
+    dplyr::summarise(
+      new_count =
+        ifelse(
+          any(UniqueVessels > 2),
+          3,
+          length(unique(unlist(strsplit(AnonVessels, ";"))))
+        )
+    ) %>%
+    dplyr::mutate(
+      new_count = ifelse(new_count >= 3, "3+", paste(new_count))
+    )
+
+  try(
+    barplot(
+      prop.table(
+        table(factor(tmp$new_count))
+      ),
+      main = "fully aggregated",
+      ylab = "Proportion of c-squares with given number of unique vessels",
+      xlab = "number of unique vessels"
+    )
   )
-)
+}
 
 
 
 ## Frequency of vessel length categories by year:
-kable(table(ICES_VE$vessel_length_category,ICES_VE$year), booktabs = TRUE)
+records_per_vessel_length_cat <-
+  data.frame(
+    table(Vessel_length = ICES_VE$vessel_length_category, Year = ICES_VE$year)
+  )
+write.taf(records_per_vessel_length_cat, dir = "report")
 
-qplot(factor(year), data = ICES_VE, geom = "bar", fill = factor(vessel_length_category)) +
-  xlab("Years") + ylab ("Count") +
-  scale_fill_grey(guide = guide_legend(title = "Length category")) +
+ggplot(records_per_vessel_length_cat) +
+  geom_bar(
+    aes(x = Year, y = Freq, fill = factor(Vessel_length)),
+    stat = "identity",
+    colour = "white"
+  ) +
+  xlab("Years") +
+  ylab("Count") +
+  scale_fill_grey(guide = guide_legend(title = "Month")) +
   theme_icesqc(legend.position = "right")
+ggsave("records_per_vessel_length_cat.png", path = "report")
+
+
+
+
+if (FALSE) {
+
 
 ## Frequency of gear codes by year:
 kable(table(ICES_VE$gear_code,ICES_VE$year), booktabs = TRUE)

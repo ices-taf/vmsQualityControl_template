@@ -11,6 +11,7 @@ output:
 
 ```{r setup, eval=TRUE, echo=FALSE, cache=FALSE}
 library(knitr)
+library(dplyr)
 library(htmlTable)
 
 opts_chunk$set(comment   = NA,
@@ -40,4 +41,44 @@ htmlTable(records_per_year)
 include_graphics("report/records_per_year.png")
 ```
 
-## Records assigned to invalid Statistical Rectangles
+## Distribution of records by month:
+
+```{r records-by-month-table, results='asis'}
+records_per_month <- read.taf("report/records_per_month.csv")
+records_per_month %>%
+  spread(Year, Freq) %>%
+  htmlTable()
+```
+
+```{r records-by-month-plot}
+include_graphics("report/records_per_month.png")
+```
+
+## Spatial extent of data submitted by year:
+```{r spatial-extent-by-year-table, results='asis'}
+spatial_extent_by_year <- read.taf("report/spatial_extent_by_year.csv")
+htmlTable(spatial_extent_by_year)
+```
+
+```{r spatial-extent-by-year-full-plot}
+include_graphics("report/spatial_extent_by_year_full.png")
+```
+
+```{r spatial-extent-by-year-core-plot}
+include_graphics("report/spatial_extent_by_year_core.png")
+```
+
+## Distribution of number of unique vessels per c-square:
+
+## Frequency of vessel length categories by year:
+
+```{r records-per-vessel-length-cat-table, results='asis'}
+records_per_vessel_length_cat <- read.taf("report/records_per_vessel_length_cat.csv")
+records_per_vessel_length_cat %>%
+  spread(Year, Freq) %>%
+  htmlTable()
+```
+
+```{r records-per-vessel-length-cat-plot}
+include_graphics("report/records_per_vessel_length_cat.png")
+```
