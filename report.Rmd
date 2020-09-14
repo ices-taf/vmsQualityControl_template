@@ -12,6 +12,7 @@ output:
 ```{r setup, eval=TRUE, echo=FALSE, cache=FALSE}
 library(knitr)
 library(dplyr)
+library(tidyr)
 library(DT)
 
 opts_chunk$set(comment   = NA,
@@ -33,8 +34,13 @@ Tables & Figures VMS
 ## Years & number of records for which data has been submitted:
 
 ```{r records-by-year-table, results='asis'}
-records_per_year <- read.taf("report/records_per_year.csv")
-htmlTable(records_per_year)
+read.taf("report/records_per_year.csv") %>%
+  datatable(
+    options = list(
+      dom = "t"
+    ),
+    rownames = FALSE
+  )
 ```
 
 ```{r records-by-year-plot}
@@ -44,8 +50,7 @@ include_graphics("report/records_per_year.png")
 ## Distribution of records by month:
 
 ```{r records-by-month-table, results='asis'}
-records_per_month <- read.taf("report/records_per_month.csv")
-records_per_month %>%
+read.taf("report/records_per_month.csv") %>%
   spread(Year, Freq) %>%
   datatable(
     options = list(
@@ -61,8 +66,17 @@ include_graphics("report/records_per_month.png")
 
 ## Spatial extent of data submitted by year:
 ```{r spatial-extent-by-year-table, results='asis'}
-spatial_extent_by_year <- read.taf("report/spatial_extent_by_year.csv")
-htmlTable(spatial_extent_by_year)
+read.taf("report/spatial_extent_by_year.csv") %>%
+  datatable(
+    options = list(
+      dom = "t"
+    ),
+    rownames = FALSE
+  ) %>%
+  formatRound(
+    columns = c("min lon", "max lon", "min lat", "max lat"),
+    digits = 3
+  )
 ```
 
 ```{r spatial-extent-by-year-full-plot}
@@ -78,10 +92,14 @@ include_graphics("report/spatial_extent_by_year_core.png")
 ## Frequency of vessel length categories by year:
 
 ```{r records-per-vessel-length-cat-table, results='asis'}
-records_per_vessel_length_cat <- read.taf("report/records_per_vessel_length_cat.csv")
-records_per_vessel_length_cat %>%
+read.taf("report/records_per_vessel_length_cat.csv") %>%
   spread(Year, Freq) %>%
-  htmlTable()
+  datatable(
+    options = list(
+      dom = "t"
+    ),
+    rownames = FALSE
+  )
 ```
 
 ```{r records-per-vessel-length-cat-plot}
