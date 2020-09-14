@@ -1,0 +1,42 @@
+---
+title: "VMS QC report"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    number_sections: true
+---
+
+```{r setup, eval=TRUE, echo=FALSE, cache=FALSE}
+library(knitr)
+
+opts_chunk$set(comment   = NA,
+               warning   = FALSE,
+               message   = FALSE,
+               error     = FALSE,
+               echo      = FALSE,
+               eval      = TRUE)
+
+options(digits = 4)
+```
+
+<!------------------------------------------------------------------------------
+Tables & Figures VMS
+---------------------------------------------------------------------------- -->
+
+# Quality of the VMS data from country
+
+## Years & number of records for which data has been submitted:
+
+```{r records-by-year-table, results='asis'}
+records_per_year <- read.taf("report/records_per_year.csv")
+htmlTable(records_per_year)
+```
+
+```{r records-by-year-plot}
+include_graphics("report/records_per_year.png")
+```
+
+## Records assigned to invalid Statistical Rectangles
