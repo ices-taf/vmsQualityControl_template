@@ -12,7 +12,7 @@ output:
 ```{r setup, eval=TRUE, echo=FALSE, cache=FALSE}
 library(knitr)
 library(dplyr)
-library(htmlTable)
+library(DT)
 
 opts_chunk$set(comment   = NA,
                warning   = FALSE,
@@ -47,7 +47,12 @@ include_graphics("report/records_per_year.png")
 records_per_month <- read.taf("report/records_per_month.csv")
 records_per_month %>%
   spread(Year, Freq) %>%
-  htmlTable()
+  datatable(
+    options = list(
+      dom = "t"
+    ),
+    rownames = FALSE
+  )
 ```
 
 ```{r records-by-month-plot}
