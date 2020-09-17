@@ -1,103 +1,169 @@
 
 library(icesTAF)
-taf.library(vmstools)
+library(data.table)
 library(ggplot2)
+library(sf)
+library(dplyr)
 
 source("utilities_report.R")
 
 mkdir("report")
 
-load("bootstrap/data/eurPols.Rdata")
-polLand <- fortify(eurPols)
+vms <- fread("data/vms.csv")
 
-ICES_VE <-
-  read.table(
-    taf.data.path("vms-data", "vms.csv"),
-    sep = ",", header = TRUE,
-    stringsAsFactors = FALSE, na.strings = "NULL",
-    colClasses = c(
-      "character", "character",
-      "character", "character", "numeric", "numeric",
-      "character", "character", "character", "character",
-      "numeric", "numeric", "numeric", "numeric",
-      "numeric", "numeric", "numeric", "numeric",
-      "numeric", "numeric", "character"
-    )
-  )
-
-country <- unique(ICES_VE$country)
-ICES_VE <-
-  cbind(
-    ICES_VE,
-    CSquare2LonLat(ICES_VE$c_square, degrees = 0.05)
-  )
-
-spatBound <-
-  list(
-    xrange = range(ICES_VE$SI_LONG, na.rm = TRUE),
-    yrange = range(ICES_VE$SI_LATI, na.rm = TRUE)
-  )
-spatCore <-
-  list(
-    xrange = quantile(ICES_VE$SI_LONG, c(0.025, 0.975)),
-    yrange = quantile(ICES_VE$SI_LATI, c(0.025, 0.975))
-  )
-tempBound <- range(ICES_VE$year, na.rm = TRUE)
-
-
-
-# Quality of the VMS data from `r country`
+#### character data summaries by year
 
 ## Years & number of records for which data has been submitted:
-records_per_year <-
-  data.frame(
-    table(Year = ICES_VE$year)
-  )
-write.taf(records_per_year, dir = "report")
-
-ggplot(records_per_year) +
-  geom_bar(aes(x = Year, y = Freq), stat = "identity") +
-  xlab("Year") +
-  ylab("Number of records") +
-  theme_icesqc()
-ggsave("records_per_year.png", path = "report")
-
+vms %>%
+  count(year) %>%
+  write.taf(file = "records_per_year.csv", dir = "report")
 
 ## Distribution of records by month:
-records_per_month <-
-  data.frame(
-    table(Month = ICES_VE$month, Year = ICES_VE$year)
-  )
-write.taf(records_per_month, dir = "report")
+vms %>%
+  count(month, year) %>%
+  write.taf("records_per_month.csv", dir = "report")
 
-ggplot(records_per_month) +
-  geom_bar(
-    aes(x = Year, y = Freq, fill = factor(Month)),
-    stat = "identity",
-    colour = "white"
-  ) +
-  xlab("Years") + ylab("Count") +
-  scale_fill_grey(guide = guide_legend(title = "Month")) +
-  theme_icesqc()
-ggsave("records_per_month.png", path = "report")
+## Frequency of vessel length categories by year:
+vms %>%
+  count(vessel_length_category, year) %>%
+  write.taf("records_per_vessel_length_cat.csv", dir = "report")
+
+## Frequency of gear codes by year:
+vms %>%
+  count(gear_code, year) %>%
+  write.taf("records_per_gear_code.csv", dir = "report")
+
+## Number of unique DCF Level 6 codes by year:
+vms %>%
+  group_by(year) %>%
+  summarise(n = length(unique(LE_MET_level6))) %>%
+  write.taf("unique_level6_code_by_year.csv", dir = "report")
+
+
+## Top 5 DCF Level 6 codes by year:
+top5Met6 <-
+  vms %>%
+  count(LE_MET_level6) %>%
+  arrange(desc(n)) %>%
+  select(LE_MET_level6) %>%
+  head(5) %>%
+  `[[`(1)
+
+vms %>%
+  filter(LE_MET_level6 %in% top5Met6) %>%
+  count(LE_MET_level6, year) %>%
+  write.taf("records_per_metier_level_6.csv", dir = "report")
+
+
+
+#### continuous data summaries
+
+my_summary <- function(x) {
+  x <- summary(1:10)
+  tibble(
+    value = unname(unclass(x)),
+    summary = names(x)
+  )
+}
+
+## Average fishing speed:
+vms %>%
+  group_by(year) %>%
+  summarise(
+    my_summary(avg_fishing_speed)
+  ) %>%
+  write.taf("summary_of_avg_fishing_speed.csv", dir = "report")
+
+## Average fishing hours:
+vms %>%
+  group_by(year) %>%
+  summarise(
+    my_summary(fishing_hours)
+  ) %>%
+  write.taf("summary_of_fishing_hours.csv", dir = "report")
+
+## Average length:
+vms %>%
+  group_by(year) %>%
+  summarise(
+    my_summary(avg_oal)
+  ) %>%
+  write.taf("summary_of_avg_oal.csv", dir = "report")
+
+## Average kW:
+vms %>%
+  group_by(year) %>%
+  summarise(
+    my_summary(avg_kw)
+  ) %>%
+  write.taf("summary_of_avg_kw.csv", dir = "report")
+
+## Average kW-hours:
+vms %>%
+  group_by(year) %>%
+  summarise(
+    my_summary(kw_fishinghours)
+  ) %>%
+  write.taf("summary_of_kw_fishinghours.csv", dir = "report")
+
+
+#### time series data summaries
+
+if (FALSE) {
+  ## Landings by gear by year:
+
+  ps <- gear_splits(ICES_VE$totweight, data = ICES_VE, "kg landed", year_groups = 2, gear_groups = 4, func = sum)
+  ps$table
+  for (p in ps$plots) print(p)
+
+
+  ## Mean landing per kW fishing hours by year:
+  ps <- gear_splits(with(ICES_VE, totweight / kw_fishinghours), data = ICES_VE, "kg/kWh", gear_groups = 4, func = median)
+  ps$table
+  for (p in ps$plots) print(p)
+
+
+  ## Value by gear by year:
+  ps <- gear_splits(ICES_VE$totvalue, data = ICES_VE, "EUR landed", gear_groups = 4, func = sum)
+  ps$table
+  for (p in ps$plots) print(p)
+
+
+  ## Median value per KW fishing hours by year:
+  ps <- gear_splits(with(ICES_VE, totvalue / kw_fishinghours), data = ICES_VE, "EUR/kWh", gear_groups = 4, func = median)
+  ps$table
+  for (p in ps$plots) print(p)
+
+
+  ##  Average price:
+
+  ps <- gear_splits(with(ICES_VE, totvalue / totweight), data = ICES_VE, "Mean price (EUR/kg)", gear_groups = 4, func = median)
+  ps$table
+  for (p in ps$plots) print(p)
+}
+
+
+
+
+#### spatial stuff
 
 
 ## Spatial extent of data submitted by year:
-coordGrd <- unique(ICES_VE[, c("SI_LONG", "SI_LATI", "year")])
+coverage <- unique(vms[, c("SI_LONG", "SI_LATI", "year", "wkt")])
 
 spatial_extent_by_year <-
   cbind(
     as.matrix(
       aggregate(
-        coordGrd$SI_LONG,
-        by = list(coordGrd$year),
+        coverage$SI_LONG,
+        by = list(coverage$year),
         FUN = range
       )
     ),
     as.matrix(
       aggregate(
-        coordGrd$SI_LATI,
-        by = list(coordGrd$year),
+        coverage$SI_LATI,
+        by = list(coverage$year),
         FUN = range
       )[, -1]
     )
@@ -106,252 +172,69 @@ colnames(spatial_extent_by_year) <- c("Year", "min lon", "max lon", "min lat", "
 write.taf(spatial_extent_by_year, dir = "report")
 
 ## Area for which data has been submitted:
-data_coverage(coordGrd, spatBound, res = 0.5)
-ggsave("spatial_extent_by_year_full.png", path = "report")
+coverage$wkt <- sf::st_as_sfc(coverage$wkt)
+coverage <- sf::st_sf(coverage, sf_column_name = "wkt", crs = 4326)
 
-data_coverage(coordGrd, spatCore, res = 0.05)
-ggsave("spatial_extent_by_year_core.png", path = "report")
-
-
-
-
-if (FALSE) {
-  ## Distribution of number of unique vessels per c-square:
-
-  try(
-    barplot(
-      prop.table(
-        table(
-          factor(ICES_VE$UniqueVessels)
-        )
-      ),
-      main = "unnagregated",
-      ylab = "Proportion of c-squares with given number of unique vessels",
-      xlab = "number of unique vessels"
-    )
+coverage <-
+  coverage %>%
+  group_by(year) %>%
+  summarise(
+    cover = sf::st_union(wkt)
   )
 
-  tmp <- ICES_VE %>%
-    dplyr::group_by(year, c_square) %>%
-    dplyr::summarise(
-      new_count =
-        ifelse(
-          any(UniqueVessels > 2),
-          3,
-          length(unique(unlist(strsplit(AnonVessels, ";"))))
-        )
-    ) %>%
-    dplyr::mutate(
-      new_count = ifelse(new_count >= 3, "3+", paste(new_count))
-    )
+st_write(coverage, "report/coverage.geojson")
 
-  try(
-    barplot(
-      prop.table(
-        table(factor(tmp$new_count))
-      ),
-      main = "aggregated to year level",
-      ylab = "Proportion of c-squares with given number of unique vessels",
-      xlab = "number of unique vessels"
-    )
-  )
-
-  tmp <- ICES_VE %>%
-    dplyr::group_by(c_square) %>%
-    dplyr::summarise(
-      new_count =
-        ifelse(
-          any(UniqueVessels > 2),
-          3,
-          length(unique(unlist(strsplit(AnonVessels, ";"))))
-        )
-    ) %>%
-    dplyr::mutate(
-      new_count = ifelse(new_count >= 3, "3+", paste(new_count))
-    )
-
-  try(
-    barplot(
-      prop.table(
-        table(factor(tmp$new_count))
-      ),
-      main = "fully aggregated",
-      ylab = "Proportion of c-squares with given number of unique vessels",
-      xlab = "number of unique vessels"
-    )
-  )
-}
-
-
-
-## Frequency of vessel length categories by year:
-records_per_vessel_length_cat <-
-  data.frame(
-    table(Vessel_length = ICES_VE$vessel_length_category, Year = ICES_VE$year)
-  )
-write.taf(records_per_vessel_length_cat, dir = "report")
-
-ggplot(records_per_vessel_length_cat) +
-  geom_bar(
-    aes(x = Year, y = Freq, fill = factor(Vessel_length)),
-    stat = "identity",
-    colour = "white"
-  ) +
-  xlab("Years") +
-  ylab("Count") +
-  scale_fill_grey(guide = guide_legend(title = "Month")) +
-  theme_icesqc(legend.position = "right")
-ggsave("records_per_vessel_length_cat.png", path = "report")
-
-
-
-
-if (FALSE) {
-
-
-## Frequency of gear codes by year:
-kable(table(ICES_VE$gear_code,ICES_VE$year), booktabs = TRUE)
-
-qplot(factor(year), data = ICES_VE, geom = "bar", fill = factor(gear_code)) +
-  xlab("Years") + ylab ("Count") +
-  scale_fill_grey(guide = guide_legend(title = "Gear code")) +
-  theme_icesqc(legend.position = "right")
 
 ## Spatial extend of 3 most dominant gears:
-
 # get 3 main gears
-gear_table <- with(ICES_VE, aggregate(fishing_hours, list(gear_code = gear_code), sum, na.rm = TRUE))
-gear_table <- gear_table[order(gear_table$x, decreasing = TRUE),]
-top3gears <- gear_table$gear_code[1:pmin(3, nrow(gear_table))]
+gear_table <-
+  vms %>%
+  group_by(gear_code) %>%
+  summarise(fishing_hours = sum(fishing_hours, na.rm = TRUE)) %>%
+  arrange(desc(fishing_hours)) %>%
+  head(3)
 
-# split by gear
-idx <- which(ICES_VE$gear_code %in% top3gears)
-coordGrd <- unique(ICES_VE[idx, c("SI_LONG", "SI_LATI", "year", "c_square", "gear_code")])
-
-# create a fortied polygon of csquares : 0.39 secs
-polVMS <- make_polVMS(coordGrd)
-polVMS$year <- rep(coordGrd$year, each = 5)
-polVMS$c_square <- rep(coordGrd$c_square,each=5)
-polVMS$gear_code<- rep(coordGrd$gear_code,each=5)
-
-# aggregate fishing days
-dat <- with(ICES_VE[idx,],
-            aggregate(fishing_hours/24,
-                 by = list(year = year, c_square = c_square, gear_code = gear_code),
-                 FUN = sum, na.rm = TRUE))
-dat <- dplyr::rename(dat, fishing_days = x)
+top3gears <- gear_table$gear_code
 
 # legend calculations
-steps <- ceiling(max(dat$fishing_days, na.rm = TRUE)/250)
-breaks <- unique(c(-1, 0, steps * c(1, 2.5, 5, 10, 25, 50, 100, 250)))
-legval <- paste(breaks[-length(breaks)], "<=", breaks[-1L])
-legval[1] <- "0"
-
-palette <- c("white", RColorBrewer::brewer.pal(length(breaks)-2, "YlOrRd"))
-dat$colgrp <- as.numeric(cut(dat$fishing_days, breaks = breaks))
-dat$cols <- palette[dat$colgrp]
-
-# join dat onto polVMS (much faster than left_join or merge)
-# make joining keys
-a_by <- apply(dat[c("year","c_square","gear_code")], 1, paste, collapse = ".")
-b_by <- apply(polVMS[c("year","c_square","gear_code")], 1, paste, collapse = ".")
-ib_by <- as.integer(factor(b_by, levels = a_by))
-polVMS$cols <- dat$cols[ib_by]
-
-# do plots
-for (gear in top3gears) {
-  p <-
-    spatialplot(polVMS[polVMS$gear_code == gear,]) +
-    scale_fill_manual(values = rev(palette), labels = rev(legval)) +
-    guides(fill = guide_legend(title = paste("Days@Sea", gear))) +
-    facet_wrap(~ year, ncol = 2) +
-    theme_icesqc(legend.position = "top")
-  print(p)
+groups <- function(x) {
+  steps <- ceiling(max(x, na.rm = TRUE) / 250)
+  breaks <- unique(c(-1, 0, steps * c(1, 2.5, 5, 10, 25, 50, 100, 250)))
+  legval <- paste(breaks[-length(breaks)], "<=", breaks[-1L])
+  legval[1] <- "0"
+  ids <- as.numeric(cut(x, breaks = breaks))
+  factor(legval[ids], levels = legval)
 }
 
+gears_coverage <-
+  vms %>%
+  filter(gear_code %in% top3gears) %>%
+  group_by(year, gear_code, wkt) %>%
+  summarise(
+    fishing_days = sum(fishing_hours, na.rm = TRUE) / 24
+  ) %>%
+  group_by(year, gear_code, wkt) %>%
+  summarise(
+    fishing_days = groups(fishing_days)
+  ) %>%
+  mutate(
+    wkt = st_as_sfc(wkt)
+  ) %>%
+  group_by(year, gear_code, fishing_days) %>%
+  summarise(
+    wkt = sf::st_union(wkt)
+  ) %>%
+  mutate(
+    fillColour = as.integer(fishing_days)
+  ) %>%
+  st_sf(sf_column_name = "wkt", crs = 4326)
+
+st_write(gears_coverage, "report/gears_coverage.geojson")
 
 
 
-## Number of unique DCF Level 6 codes by year:
 
-kable(count(unique(ICES_VE[,c("LE_MET_level6","year")]),"year"), booktabs = TRUE)
-
-
-## Top 5 DCF Level 6 codes by year:
-
-top5Met6 <- names(sort(table(ICES_VE$LE_MET_level6), decreasing = TRUE))
-top5Met6 <- top5Met6[1:pmin(5, length(top5Met6))]
-kable(table(ICES_VE$LE_MET_level6, ICES_VE$year)[top5Met6,,drop=FALSE], booktabs = TRUE)
-
-qplot(factor(year),
-      data = ICES_VE[ICES_VE$LE_MET_level6 %in% top5Met6,],
-      geom = "bar", fill = factor(LE_MET_level6)) +
-  xlab("Years") + ylab ("Count") +
-  scale_fill_grey(guide = guide_legend(title = "Level 6")) +
-  theme_icesqc(legend.position = "right")
-
-
-
-## Average fishing speed:
-
-kable(do.call(rbind, tapply(ICES_VE$avg_fishing_speed, ICES_VE$year, summary)), booktabs = TRUE)
-
-ggplot(ICES_VE, aes(x = avg_fishing_speed)) +
-  geom_histogram() +
-  xlab("Average fishing speed") + ylab ("Count") +
-  facet_wrap( ~ year, ncol = 2) +
-  theme_icesqc()
-
-## Average fishing hours:
-kable(do.call(rbind, tapply(ICES_VE$fishing_hours, ICES_VE$year, summary)), booktabs = TRUE)
-
-ggplot(ICES_VE, aes(x = fishing_hours)) +
-  geom_histogram() +
-  xlab("Average fishing hours") + ylab("Count") +
-  facet_wrap( ~ year, ncol = 2) +
-  theme_icesqc()
-
-
-
-## Average length:
-
-kable(do.call(rbind, tapply(ICES_VE$avg_oal, ICES_VE$year, summary)), booktabs = TRUE)
-
-
-ggplot(ICES_VE, aes(x = avg_oal))+
-  geom_histogram() +
-  xlab("Average vessel length") + ylab("Count") +
-  facet_wrap( ~ year, ncol = 2) +
-  theme_icesqc()
-
-
-## Average kW:
-kable(do.call(rbind, tapply(ICES_VE$avg_kw, ICES_VE$year, summary)), booktabs = TRUE)
-
-ggplot(ICES_VE, aes(x = avg_kw))+
-  geom_histogram() +
-  xlab("Average kW") + ylab ("Count") +
-  facet_wrap( ~ year, ncol = 2) +
-  theme_icesqc()
-
-
-
-## Average kW-hours:
-
-kable(do.call(rbind, tapply(ICES_VE$kw_fishinghours, ICES_VE$year, summary)), booktabs = TRUE)
-
-ggplot(ICES_VE, aes(x = kw_fishinghours))+
-  geom_histogram() +
-  xlab("Average kW-hours") + ylab("Count") +
-  facet_wrap(~ year, ncol = 2) +
-  theme_icesqc()
-
-
-## Landings by gear by year:
-ps <- gear_splits(ICES_VE$totweight, data = ICES_VE, "kg landed", year_groups = 2, gear_groups = 4, func = sum)
-ps$table
-for (p in ps$plots) print(p)
-
+if (FALSE) {
 
 ## Spatial distribution of effort by year:
 coordGrd <- unique(ICES_VE[,c("SI_LONG","SI_LATI","year","c_square")])
@@ -512,28 +395,74 @@ spatialplot(polVMS) +
   theme_icesqc(legend.position = "right")
 
 
-## Mean landing per kW fishing hours by year:
-ps <- gear_splits(with(ICES_VE, totweight/kw_fishinghours), data = ICES_VE, "kg/kWh", gear_groups = 4, func = median)
-ps$table
-for (p in ps$plots) print(p)
 
 
-## Value by gear by year:
-ps <- gear_splits(ICES_VE$totvalue, data = ICES_VE, "EUR landed", gear_groups = 4, func = sum)
-ps$table
-for (p in ps$plots) print(p)
+}
 
 
-## Median value per KW fishing hours by year:
-ps <- gear_splits(with(ICES_VE, totvalue/kw_fishinghours), data = ICES_VE, "EUR/kWh", gear_groups = 4, func = median)
-ps$table
-for (p in ps$plots) print(p)
+if (FALSE) {
+  ## Distribution of number of unique vessels per c-square:
 
+  try(
+    barplot(
+      prop.table(
+        table(
+          factor(ICES_VE$UniqueVessels)
+        )
+      ),
+      main = "unnagregated",
+      ylab = "Proportion of c-squares with given number of unique vessels",
+      xlab = "number of unique vessels"
+    )
+  )
 
-##  Average price:
+  tmp <- ICES_VE %>%
+    dplyr::group_by(year, c_square) %>%
+    dplyr::summarise(
+      new_count =
+        ifelse(
+          any(UniqueVessels > 2),
+          3,
+          length(unique(unlist(strsplit(AnonVessels, ";"))))
+        )
+    ) %>%
+    dplyr::mutate(
+      new_count = ifelse(new_count >= 3, "3+", paste(new_count))
+    )
 
-ps <- gear_splits(with(ICES_VE, totvalue/totweight), data = ICES_VE, "Mean price (EUR/kg)", gear_groups = 4, func = median)
-ps$table
-for (p in ps$plots) print(p)
+  try(
+    barplot(
+      prop.table(
+        table(factor(tmp$new_count))
+      ),
+      main = "aggregated to year level",
+      ylab = "Proportion of c-squares with given number of unique vessels",
+      xlab = "number of unique vessels"
+    )
+  )
 
+  tmp <- ICES_VE %>%
+    dplyr::group_by(c_square) %>%
+    dplyr::summarise(
+      new_count =
+        ifelse(
+          any(UniqueVessels > 2),
+          3,
+          length(unique(unlist(strsplit(AnonVessels, ";"))))
+        )
+    ) %>%
+    dplyr::mutate(
+      new_count = ifelse(new_count >= 3, "3+", paste(new_count))
+    )
+
+  try(
+    barplot(
+      prop.table(
+        table(factor(tmp$new_count))
+      ),
+      main = "fully aggregated",
+      ylab = "Proportion of c-squares with given number of unique vessels",
+      xlab = "number of unique vessels"
+    )
+  )
 }
