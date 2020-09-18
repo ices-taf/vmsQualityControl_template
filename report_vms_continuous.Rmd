@@ -24,7 +24,7 @@ plot_ly_num <- function(data, x) {
 
 ### Average fishing speed
 
-```{rn average_fishing_speed_plot}
+```{r average_fishing_speed_plot}
 read.taf("data/vms.csv") %>%
   plot_ly_num(~avg_fishing_speed)
 ```
