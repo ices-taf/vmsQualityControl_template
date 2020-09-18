@@ -5,7 +5,7 @@ library(ggplot2)
 library(sf)
 library(dplyr)
 
-source("utilities_report.R")
+options(dplyr.summarise.inform = FALSE)
 
 mkdir("report")
 

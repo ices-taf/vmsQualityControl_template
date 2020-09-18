@@ -4,8 +4,6 @@ library(ggplot2)
 library(sf)
 library(dplyr)
 
-source("utilities_report.R")
-
 mkdir("report")
 
 vms <- fread("data/vms.csv")

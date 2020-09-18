@@ -35,7 +35,8 @@ vignettes/*.pdf
 *.Rproj
 
 # taf stuff
-/raw/
+/report/
+/data/
 /report/
 /bootstrap/data/
 /bootstrap/software/
