@@ -1,7 +1,7 @@
 
 library(icesTAF)
 library(data.table)
-taf.library(vmstools)
+library(vmstools)
 library(dplyr)
 
 mkdir("data")
