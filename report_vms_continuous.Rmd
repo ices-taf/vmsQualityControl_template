@@ -13,11 +13,13 @@ num_plot <- function(data, x) {
 }
 
 plot_ly_num <- function(data, x) {
-  data %>%
-    split(.$year) %>%
-    lapply(num_plot, x = x) %>%
-    subplot(nrows = 2, shareX = TRUE, titleX = FALSE) %>%
-    hide_legend()
+  suppressWarnings(
+    data %>%
+      split(.$year) %>%
+      lapply(num_plot, x = x) %>%
+      subplot(nrows = 2, shareX = TRUE, titleX = FALSE) %>%
+      hide_legend()
+  )
 }
 ```
 

@@ -49,7 +49,7 @@ coverage <-
     cover = sf::st_union(wkt)
   )
 
-st_write(coverage, "report/coverage.geojson")
+st_write(coverage, "report/coverage.geojson", quiet = TRUE)
 
 
 ## Spatial extend of 3 most dominant gears:
@@ -96,7 +96,7 @@ gears_coverage <-
   ) %>%
   st_sf(sf_column_name = "wkt", crs = 4326)
 
-st_write(gears_coverage, "report/gears_coverage.geojson")
+st_write(gears_coverage, "report/gears_coverage.geojson", quiet = TRUE)
 
 
 

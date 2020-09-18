@@ -5,7 +5,7 @@ ggplotly_ts <- function(data) {
   p <-
     data %>%
     ggplot(aes(x = year, y = y, color = gear_code)) +
-    geom_line()
+    geom_line(na.rm = TRUE)
   ggplotly(p)
 }
 ```

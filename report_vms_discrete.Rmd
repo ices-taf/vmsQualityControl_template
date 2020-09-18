@@ -2,14 +2,16 @@
 
 ```{r utils-1}
 plot_ly_char <- function(data, color = NULL) {
-  data %>%
-    plot_ly(
-      x = ~year,
-      y = ~n,
-      color = color,
-      type = "bar"
-    ) %>%
-    layout(barmode = "stack")
+  suppressWarnings(
+    data %>%
+      plot_ly(
+        x = ~year,
+        y = ~n,
+        color = color,
+        type = "bar"
+      ) %>%
+      layout(barmode = "stack")
+  )
 }
 
 datatable_char <- function(data) {
