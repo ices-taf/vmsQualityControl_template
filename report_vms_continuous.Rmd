@@ -1,0 +1,59 @@
+## Numeric data
+
+```{r utils-num}
+num_plot <- function(data, x) {
+  data %>%
+    plot_ly(alpha = 0.6) %>%
+    add_histogram(x = x, nbinsx = 50) %>%
+    add_annotations(
+      ~ unique(year),
+      x = 0.5, y = 1,
+      xref = "paper", yref = "paper", showarrow = FALSE
+    )
+}
+
+plot_ly_num <- function(data, x) {
+  data %>%
+    split(.$year) %>%
+    lapply(num_plot, x = x) %>%
+    subplot(nrows = 2, shareX = TRUE, titleX = FALSE) %>%
+    hide_legend()
+}
+```
+
+
+### Average fishing speed
+
+```{rn average_fishing_speed_plot}
+read.taf("data/vms.csv") %>%
+  plot_ly_num(~avg_fishing_speed)
+```
+
+### Average fishing hours:
+
+```{r average_fishing_hours_plot}
+read.taf("data/vms.csv") %>%
+  plot_ly_num(~ I(fishing_hours^0.5))
+```
+
+### Average length:
+
+```{r average_overall_length_plot}
+read.taf("data/vms.csv") %>%
+  plot_ly_num(~avg_oal)
+```
+
+
+### Average kW:
+
+```{r average_kw_plot}
+read.taf("data/vms.csv") %>%
+  plot_ly_num(~avg_kw)
+```
+
+### Average kW-hours:
+
+```{r average_wk_fishing_hours_plot}
+read.taf("data/vms.csv") %>%
+  plot_ly_num(~I(kw_fishinghours^.5))
+```

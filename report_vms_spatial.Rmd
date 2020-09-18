@@ -1,0 +1,103 @@
+
+## Spatial data
+
+### Spatial extent
+```{r spatial-extent-by-year-table, results='asis'}
+read.taf("report/spatial_extent_by_year.csv") %>%
+  datatable(
+    options = list(
+      dom = "t",
+      pageLength = -1
+    ),
+    rownames = FALSE
+  ) %>%
+  formatRound(
+    columns = c("min lon", "max lon", "min lat", "max lat"),
+    digits = 3
+  )
+```
+
+```{r spatial-extent-by-year-map}
+coverage <- st_read("report/coverage.geojson", quiet = TRUE)
+years <- coverage$year
+
+m <-
+  leaflet() %>%
+  addTiles() %>%
+  addProviderTiles(providers$Esri.OceanBasemap)
+
+for (layer in years) {
+  m <-
+    addPolygons(
+      m,
+      data = coverage %>% filter(year == layer),
+      fillColor = "red", # rainbow(length(years))[layer %% min(years) + 1],
+      weight = 0,
+      opacity = 1,
+      fillOpacity = 0.4,
+      stroke = FALSE,
+      group = paste(layer)
+    )
+}
+m <-
+  addLayersControl(
+    m,
+    baseGroups = paste(years),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+
+m
+```
+
+### Spatial extend of 3 most dominant gears
+
+```{r spatial-distribution-by-gear-map}
+gears_coverage <- st_read("report/gears_coverage.geojson", quiet = TRUE)
+
+cols <- rev(heat.colors(9))
+
+ms <-
+lapply(unique(gears_coverage$gear_code), function(gear) {
+  gear_coverage <- gears_coverage %>% filter(gear_code == gear)
+  years <- gear_coverage$year
+
+  m <-
+    leaflet() %>%
+    addTiles() %>%
+    addProviderTiles(providers$Esri.OceanBasemap)
+
+  for (layer in years) {
+    gear_coverage_layer <- gear_coverage %>% filter(year == layer)
+    m <-
+      addPolygons(
+        m,
+        data = gear_coverage_layer,
+        fillColor = cols[gear_coverage_layer$fillColour], # rainbow(length(years))[layer %% min(years) + 1],
+        weight = 0,
+        opacity = 1,
+        fillOpacity = .7,
+        stroke = FALSE,
+        group = paste(layer)
+      )
+  }
+  m <-
+    addLayersControl(
+      m,
+      baseGroups = paste(years),
+      options = layersControlOptions(collapsed = FALSE),
+    ) %>%
+    addLegend(
+      "bottomright",
+      colors = cols[gear_coverage_layer$fillColour],
+      labels = gear_coverage_layer$fishing_days,
+      title = gear,
+      opacity = 1
+    )
+
+  m
+})
+
+ms[[1]]
+ms[[2]]
+ms[[3]]
+```

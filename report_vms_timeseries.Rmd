@@ -1,0 +1,46 @@
+## Time series
+
+```{r utilities-ts}
+ggplotly_ts <- function(data) {
+  p <-
+    data %>%
+    ggplot(aes(x = year, y = y, color = gear_code)) +
+    geom_line()
+  ggplotly(p)
+}
+```
+
+### Landings
+
+```{r landings-plot}
+read.taf("report/summary_of_totalwieight.csv") %>%
+  ggplotly_ts()
+```
+
+### LPUE
+
+```{r lpue-plot}
+read.taf("report/summary_of_median_weight_per_effort.csv") %>%
+  ggplotly_ts()
+```
+
+### Value
+
+```{r value-plot}
+read.taf("report/summary_of_totvalue.csv") %>%
+  ggplotly_ts()
+```
+
+### Value per Effort
+
+```{r value-per-effort-plot}
+read.taf("report/summary_of_median_value_per_hour.csv") %>%
+  ggplotly_ts()
+```
+
+### Price
+
+```{r value-per-weight-plot}
+read.taf("report/summary_of_median_value_per_weight.csv") %>%
+  ggplotly_ts()
+```

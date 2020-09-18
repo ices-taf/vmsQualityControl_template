@@ -1,0 +1,108 @@
+## Character data
+
+```{r utils-1}
+plot_ly_char <- function(data, color = NULL) {
+  data %>%
+    plot_ly(
+      x = ~year,
+      y = ~n,
+      color = color,
+      type = "bar"
+    ) %>%
+    layout(barmode = "stack")
+}
+
+datatable_char <- function(data) {
+  data %>%
+    spread(year, n) %>%
+    datatable(
+      extensions = "Buttons",
+      options = list(
+        dom = "Bfrtip",
+        buttons =
+          list("copy", "print", list(
+            extend = "collection",
+            buttons = c("csv", "excel", "pdf"),
+            text = "Download"
+          )),
+        pageLength = -1
+      ),
+      rownames = FALSE
+    )
+}
+```
+
+
+### number of records
+
+<button class="btn btn-primary" data-toggle="collapse" data-target="#BlockName1"> show/hide Table </button>
+
+<div id="BlockName1" class="collapse">
+```{r records-by-year-table, results='asis'}
+read.taf("report/records_per_year.csv") %>%
+  datatable_char()
+```
+</div>
+
+```{r records-by-year-plot}
+read.taf("report/records_per_year.csv") %>%
+  plot_ly_char()
+```
+
+### Frequency by month:
+
+```{r records-by-month-table, results='asis'}
+read.taf("report/records_per_month.csv") %>%
+  datatable_char()
+```
+
+```{r records-by-month-plot}
+read.taf("report/records_per_month.csv") %>%
+  plot_ly_char(~ factor(month))
+```
+
+### Distribution of number of unique vessels per c-square:
+
+### Frequency of vessel length categories
+
+```{r records-per-vessel-length-cat-table, results='asis'}
+read.taf("report/records_per_vessel_length_cat.csv") %>%
+  datatable_char()
+```
+
+```{r records-per-vessel-length-cat-plot}
+read.taf("report/records_per_vessel_length_cat.csv") %>%
+  plot_ly_char(~ factor(vessel_length_category))
+```
+
+### Frequency of gear codes
+
+```{r records-per-gear-code-table, results='asis'}
+read.taf("report/records_per_gear_code.csv") %>%
+  datatable_char()
+```
+
+```{r records-per-gear-code-plot}
+read.taf("report/records_per_gear_code.csv") %>%
+  plot_ly_char(~ factor(gear_code))
+```
+
+### Number of unique DCF Level 6 codes
+
+```{r unique_level6_code_by_year, results='asis'}
+read.taf("report/unique_level6_code_by_year.csv") %>%
+  datatable_char()
+```
+
+### Top 5 DCF Level 6 codes
+
+
+```{r level6_code_by_year_table, results='asis'}
+read.taf("report/records_per_metier_level_6.csv") %>%
+  datatable_char()
+```
+
+```{r level6_code_by_year_plot}
+read.taf("report/records_per_metier_level_6.csv") %>%
+  plot_ly_char(~ factor(LE_MET_level6))
+```
