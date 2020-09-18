@@ -109,38 +109,48 @@ vms %>%
 
 #### time series data summaries
 
-if (FALSE) {
-  ## Landings by gear by year:
-
-  ps <- gear_splits(ICES_VE$totweight, data = ICES_VE, "kg landed", year_groups = 2, gear_groups = 4, func = sum)
-  ps$table
-  for (p in ps$plots) print(p)
+## Landings by gear by year:
+vms %>%
+  group_by(year, gear_code) %>%
+  summarise(
+    y = sum(totweight, na.rm = TRUE)
+  ) %>%
+  write.taf("summary_of_totalwieight.csv", dir = "report")
 
 
   ## Mean landing per kW fishing hours by year:
-  ps <- gear_splits(with(ICES_VE, totweight / kw_fishinghours), data = ICES_VE, "kg/kWh", gear_groups = 4, func = median)
-  ps$table
-  for (p in ps$plots) print(p)
+  vms %>%
+    group_by(year, gear_code) %>%
+    summarise(
+      y = median(totweight / kw_fishinghours, na.rm = TRUE)
+    ) %>%
+    write.taf("summary_of_median_weight_per_effort.csv", dir = "report")
 
 
-  ## Value by gear by year:
-  ps <- gear_splits(ICES_VE$totvalue, data = ICES_VE, "EUR landed", gear_groups = 4, func = sum)
-  ps$table
-  for (p in ps$plots) print(p)
+  ## Value:
+  vms %>%
+    group_by(year, gear_code) %>%
+    summarise(
+      y = sum(totvalue, na.rm = TRUE)
+    ) %>%
+    write.taf("summary_of_totvalue.csv", dir = "report")
 
 
-  ## Median value per KW fishing hours by year:
-  ps <- gear_splits(with(ICES_VE, totvalue / kw_fishinghours), data = ICES_VE, "EUR/kWh", gear_groups = 4, func = median)
-  ps$table
-  for (p in ps$plots) print(p)
-
+  ## value per effort:
+  vms %>%
+    group_by(year, gear_code) %>%
+    summarise(
+      y = median(totvalue / kw_fishinghours, na.rm = TRUE)
+    ) %>%
+    write.taf("summary_of_median_value_per_hour.csv", dir = "report")
 
   ##  Average price:
-
-  ps <- gear_splits(with(ICES_VE, totvalue / totweight), data = ICES_VE, "Mean price (EUR/kg)", gear_groups = 4, func = median)
-  ps$table
-  for (p in ps$plots) print(p)
-}
+  vms %>%
+    group_by(year, gear_code) %>%
+    summarise(
+      y = median(totvalue / totweight, na.rm = TRUE)
+    ) %>%
+    write.taf("summary_of_median_value_per_weight.csv", dir = "report")
 
 
 
