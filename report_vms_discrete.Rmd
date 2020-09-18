@@ -1,6 +1,6 @@
 ## Character data
 
-```{r utils-1}
+```{r utils-disctrete}
 plot_ly_char <- function(data, color = NULL) {
   suppressWarnings(
     data %>%

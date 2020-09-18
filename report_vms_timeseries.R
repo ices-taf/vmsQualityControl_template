@@ -13,25 +13,6 @@ vms <- fread("data/vms.csv")
 
 #### time series data summaries
 
-num_plot <- function(data, x) {
-  data %>%
-    plot_ly(alpha = 0.6) %>%
-    add_histogram(x = x, nbinsx = 50) %>%
-    add_annotations(
-      ~ unique(year),
-      x = 0.5, y = 1,
-      xref = "paper", yref = "paper", showarrow = FALSE
-    )
-}
-
-plot_ly_num <- function(data, x) {
-  data %>%
-    split(.$year) %>%
-    lapply(num_plot, x = x) %>%
-    subplot(nrows = 2, shareX = TRUE, titleX = FALSE) %>%
-    hide_legend()
-}
-
 ## Landings by gear by year:
 vms %>%
   group_by(year, gear_code) %>%

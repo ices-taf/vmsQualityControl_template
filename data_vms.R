@@ -4,6 +4,8 @@ library(data.table)
 library(vmstools)
 library(dplyr)
 
+options(dplyr.summarise.inform = FALSE)
+
 mkdir("data")
 
 vms <-
