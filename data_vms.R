@@ -8,9 +8,7 @@ mkdir("data")
 
 vms <-
   fread(
-    taf.data.path("vms-data", "vms.csv"),
-    sep = ",", header = TRUE,
-    stringsAsFactors = FALSE, na.strings = "NULL"
+    taf.data.path("vms-data", "vms.csv")
   )
 
 numerics <-
