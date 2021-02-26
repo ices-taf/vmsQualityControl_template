@@ -74,70 +74,69 @@ logbook %>%
 
 if (FALSE) {
 
-## Distribution of number of unique vessels per stat-square:
+  ## Distribution of number of unique vessels per stat-square:
 
-try(
-  barplot(
-    prop.table(
-      table(
-        factor(ICES_LE$UniqueVessels)
-      )
-    ),
-    main = "unnagregated",
-    ylab = "Proportion of c-squares with given number of unique vessels",
-    xlab = "number of unique vessels"
-  )
-)
-
-
-tmp <- ICES_LE %>%
-  dplyr::group_by(year, ICES_rectangle) %>%
-  dplyr::summarise(
-    new_count =
-      ifelse(
-        any(UniqueVessels > 2),
-        3,
-        length(unique(unlist(strsplit(AnonVessels, ";"))))
-      )
-  ) %>%
-  dplyr::mutate(
-    new_count = ifelse(new_count >= 3, "3+", paste(new_count))
+  try(
+    barplot(
+      prop.table(
+        table(
+          factor(ICES_LE$UniqueVessels)
+        )
+      ),
+      main = "unnagregated",
+      ylab = "Proportion of c-squares with given number of unique vessels",
+      xlab = "number of unique vessels"
+    )
   )
 
-try(
-  barplot(
-    prop.table(
-      table(factor(tmp$new_count))
-    ),
-    main = "aggregated to year level",
-    ylab = "Proportion of stat-squares with given number of unique vessels",
-    xlab = "number of unique vessels"
-  )
-)
 
-tmp <- ICES_LE %>%
-  dplyr::group_by(ICES_rectangle) %>%
-  dplyr::summarise(
-    new_count =
-      ifelse(
-        any(UniqueVessels > 2),
-        3,
-        length(unique(unlist(strsplit(AnonVessels, ";"))))
-      )
-  ) %>%
-  dplyr::mutate(
-    new_count = ifelse(new_count >= 3, "3+", paste(new_count))
+  tmp <- ICES_LE %>%
+    dplyr::group_by(year, ICES_rectangle) %>%
+    dplyr::summarise(
+      new_count =
+        ifelse(
+          any(UniqueVessels > 2),
+          3,
+          length(unique(unlist(strsplit(AnonVessels, ";"))))
+        )
+    ) %>%
+    dplyr::mutate(
+      new_count = ifelse(new_count >= 3, "3+", paste(new_count))
+    )
+
+  try(
+    barplot(
+      prop.table(
+        table(factor(tmp$new_count))
+      ),
+      main = "aggregated to year level",
+      ylab = "Proportion of stat-squares with given number of unique vessels",
+      xlab = "number of unique vessels"
+    )
   )
 
-try(
-  barplot(
-    prop.table(
-      table(factor(tmp$new_count))
-    ),
-    main = "fully aggregated",
-    ylab = "Proportion of stat-squares with given number of unique vessels",
-    xlab = "number of unique vessels"
-  )
-)
+  tmp <- ICES_LE %>%
+    dplyr::group_by(ICES_rectangle) %>%
+    dplyr::summarise(
+      new_count =
+        ifelse(
+          any(UniqueVessels > 2),
+          3,
+          length(unique(unlist(strsplit(AnonVessels, ";"))))
+        )
+    ) %>%
+    dplyr::mutate(
+      new_count = ifelse(new_count >= 3, "3+", paste(new_count))
+    )
 
+  try(
+    barplot(
+      prop.table(
+        table(factor(tmp$new_count))
+      ),
+      main = "fully aggregated",
+      ylab = "Proportion of stat-squares with given number of unique vessels",
+      xlab = "number of unique vessels"
+    )
+  )
 }

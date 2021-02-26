@@ -7,4 +7,5 @@ library(icesTAF)
 
 mkdir("data")
 
-source("data_vms.R")
+#source("data_vms.R")
+source("data_logbook.R")

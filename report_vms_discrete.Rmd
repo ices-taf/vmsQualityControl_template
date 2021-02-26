@@ -108,3 +108,9 @@ read.taf("report/records_per_metier_level_6.csv") %>%
 read.taf("report/records_per_metier_level_6.csv") %>%
   plot_ly_char(~ factor(LE_MET_level6))
 ```
+
+### VMS enabled
+```{r vms-enabled}
+read.taf("report/logbook_vms_enabled_per_length_category.csv") %>%
+  plot_ly_char(~ factor(LE_MET_level6))
+```

@@ -27,7 +27,7 @@ output:
 -->
 
 
-```{r setup, eval=TRUE, echo=FALSE, cache=FALSE}
+```{r setup, eval = TRUE, echo = FALSE, cache = FALSE, message = FALSE}
 library(knitr)
 library(dplyr)
 library(tidyr)
@@ -42,7 +42,7 @@ opts_chunk$set(
   message = FALSE,
   error = FALSE,
   echo = FALSE,
-  eval = TRUE
+  eval = FALSE
 )
 
 options(digits = 4)
@@ -63,3 +63,6 @@ options(digits = 4)
 ```
 
 # Logbook data submission QC
+
+```{r child = 'report_logbook_discrete.Rmd', eval = TRUE}
+```
